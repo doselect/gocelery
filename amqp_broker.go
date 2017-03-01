@@ -21,7 +21,7 @@ func NewAMQPExchange(name string) *AMQPExchange {
 		Name:       name,
 		Type:       "direct",
 		Durable:    true,
-		AutoDelete: true,
+		AutoDelete: false,
 	}
 }
 
@@ -66,14 +66,14 @@ func NewAMQPConnection(host string) (*amqp.Connection, *amqp.Channel) {
 }
 
 // NewAMQPCeleryBroker creates new AMQPCeleryBroker
-func NewAMQPCeleryBroker(host string) *AMQPCeleryBroker {
+func NewAMQPCeleryBroker(host, queue string) *AMQPCeleryBroker {
 	conn, channel := NewAMQPConnection(host)
 	// ensure exchange is initialized
 	broker := &AMQPCeleryBroker{
 		Channel:    channel,
 		connection: conn,
-		exchange:   NewAMQPExchange("default"),
-		queue:      NewAMQPQueue("celery"),
+		exchange:   NewAMQPExchange(queue),
+		queue:      NewAMQPQueue(queue),
 		rate:       4,
 	}
 	if err := broker.CreateExchange(); err != nil {

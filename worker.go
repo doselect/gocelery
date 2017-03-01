@@ -69,6 +69,8 @@ func (w *CeleryWorker) StartWorker() {
 			}
 		}(i)
 	}
+	// wait untill all tasks are done
+	w.workWG.Wait()
 }
 
 // StopWorker stops celery workers
