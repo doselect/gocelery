@@ -102,7 +102,9 @@ func (w *CeleryWorker) GetTask(name string) interface{} {
 		return nil
 	}
 	w.taskLock.RUnlock()
-	return task
+	// Use a new instance of task instead of using the same task variable for every worker
+	newTaskInstance := reflect.New(reflect.TypeOf(task)).Interface()
+	return newTaskInstance
 }
 
 // RunTask runs celery task
