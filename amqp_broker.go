@@ -82,6 +82,9 @@ func NewAMQPCeleryBroker(host, queue string) *AMQPCeleryBroker {
 	if err := broker.CreateQueue(); err != nil {
 		panic(err)
 	}
+	if err := broker.QueueBind(queue, queue, queue, false, nil); err != nil {
+		panic(err)
+	}
 	if err := broker.Qos(broker.rate, 0, false); err != nil {
 		panic(err)
 	}
