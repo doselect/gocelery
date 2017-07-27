@@ -5,6 +5,7 @@ import (
 	"log"
 	"reflect"
 	"sync"
+	"time"
 )
 
 // CeleryWorker represents distributed task worker
@@ -47,6 +48,16 @@ func (w *CeleryWorker) StartWorker() {
 					taskMessage, err := w.broker.GetTaskMessage()
 					if err != nil || taskMessage == nil {
 						continue
+					}
+
+					if taskMessage.Expires != "" {
+						expires, err := time.Parse(time.RFC3339, taskMessage.Expires)
+						// check whether the task has expired
+						if err == nil {
+							if time.Now().After(expires) {
+								continue
+							}
+						}
 					}
 
 					//log.Printf("WORKER %d task message received: %v\n", workerID, taskMessage)
