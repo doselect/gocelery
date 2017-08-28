@@ -47,6 +47,7 @@ func (w *CeleryWorker) StartWorker() {
 					// process messages
 					taskMessage, err := w.broker.GetTaskMessage()
 					if err != nil || taskMessage == nil {
+						log.Println("Error while processing task message")
 						continue
 					}
 
@@ -55,6 +56,7 @@ func (w *CeleryWorker) StartWorker() {
 						// check whether the task has expired
 						if err == nil {
 							if time.Now().After(expires) {
+								log.Printf("Task expired, Expiry: %s\n", taskMessage.Expires)
 								continue
 							}
 						}
