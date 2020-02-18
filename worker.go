@@ -17,6 +17,7 @@ type CeleryWorker struct {
 	taskLock        sync.RWMutex
 	stopChannel     chan struct{}
 	workWG          sync.WaitGroup
+	rateLimitPeriod time.Duration
 }
 
 // NewCeleryWorker returns new celery worker
@@ -26,6 +27,7 @@ func NewCeleryWorker(broker CeleryBroker, backend CeleryBackend, numWorkers int)
 		backend:         backend,
 		numWorkers:      numWorkers,
 		registeredTasks: make(map[string]interface{}),
+		rateLimitPeriod: 100 * time.Millisecond,
 	}
 }
 
@@ -38,11 +40,12 @@ func (w *CeleryWorker) StartWorker() {
 	for i := 0; i < w.numWorkers; i++ {
 		go func(workerID int) {
 			defer w.workWG.Done()
+			ticker := time.NewTicker(w.rateLimitPeriod)
 			for {
 				select {
 				case <-w.stopChannel:
 					return
-				default:
+				case <-ticker.C:
 
 					// process messages
 					taskMessage, err := w.broker.GetTaskMessage()
