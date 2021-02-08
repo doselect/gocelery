@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"sync"
 	"time"
+	"context"
 )
 
 // CeleryWorker represents distributed task worker
@@ -18,6 +19,8 @@ type CeleryWorker struct {
 	stopChannel     chan struct{}
 	workWG          sync.WaitGroup
 	rateLimitPeriod time.Duration
+	cancelFunc      context.CancelFunc
+	waitGroup       sync.WaitGroup
 }
 
 // NewCeleryWorker returns new celery worker
@@ -33,17 +36,22 @@ func NewCeleryWorker(broker CeleryBroker, backend CeleryBackend, numWorkers int)
 
 // StartWorker starts celery worker
 func (w *CeleryWorker) StartWorker() {
-
 	w.stopChannel = make(chan struct{}, 1)
-	w.workWG.Add(w.numWorkers)
+	// wg.Add(w.numWorkers)
+
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	w.cancelFunc = cancelFunc
+	w.waitGroup = sync.WaitGroup{}
+	w.waitGroup.Add(w.numWorkers)
 
 	for i := 0; i < w.numWorkers; i++ {
 		go func(workerID int) {
-			defer w.workWG.Done()
+			// defer wg.Done()
+			defer w.waitGroup.Done()
 			ticker := time.NewTicker(w.rateLimitPeriod)
 			for {
 				select {
-				case <-w.stopChannel:
+				case <-ctx.Done():
 					return
 				case <-ticker.C:
 
@@ -86,15 +94,19 @@ func (w *CeleryWorker) StartWorker() {
 		}(i)
 	}
 	// wait untill all tasks are done
-	w.workWG.Wait()
+	// w.workWG.Wait()
 }
 
 // StopWorker stops celery workers
 func (w *CeleryWorker) StopWorker() {
-	for i := 0; i < w.numWorkers; i++ {
-		w.stopChannel <- struct{}{}
-	}
-	w.workWG.Wait()
+	// for i := 0; i < w.numWorkers; i++ {
+	// 	w.stopChannel <- struct{}{}
+	// }
+	// w.workWG.Wait()
+	log.Println("Stopping Yoda...")
+	w.cancelFunc()
+	w.waitGroup.Wait()
+	log.Println("All go routine finished its task. Shutting down gracefully")
 }
 
 // GetNumWorkers returns number of currently running workers
