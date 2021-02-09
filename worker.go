@@ -34,6 +34,10 @@ func NewCeleryWorker(broker CeleryBroker, backend CeleryBackend, numWorkers int)
 	}
 }
 
+func abc(){
+	log.Println("finished execution................................")
+}
+
 // StartWorker starts celery worker
 func (w *CeleryWorker) StartWorker() {
 	w.stopChannel = make(chan struct{}, 1)
@@ -48,20 +52,23 @@ func (w *CeleryWorker) StartWorker() {
 		go func(workerID int) {
 			// defer wg.Done()
 			defer w.waitGroup.Done()
+			defer abc()
 			ticker := time.NewTicker(w.rateLimitPeriod)
 			for {
 				select {
 				case <-ctx.Done():
+					log.Println("Received done")
 					return
 				case <-ticker.C:
 
 					// process messages
+					log.Println("looking for message")
 					taskMessage, err := w.broker.GetTaskMessage()
 					if err != nil || taskMessage == nil {
 						log.Println("Error while processing task message")
 						continue
 					}
-
+					log.Println("received message")
 					if taskMessage.Expires != "" {
 						expires, err := time.Parse(time.RFC3339, taskMessage.Expires)
 						// check whether the task has expired
@@ -75,12 +82,14 @@ func (w *CeleryWorker) StartWorker() {
 
 					//log.Printf("WORKER %d task message received: %v\n", workerID, taskMessage)
 
+					log.Println("start processing")
 					// run task
 					resultMsg, err := w.RunTask(taskMessage)
 					if err != nil {
 						log.Println(err)
 						continue
 					}
+					log.Println(resultMsg)
 					defer releaseResultMessage(resultMsg)
 
 					// push result to backend
