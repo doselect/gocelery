@@ -62,7 +62,7 @@ func (w *CeleryWorker) StartWorker() {
 				case <-ticker.C:
 
 					// process messages
-					log.Println("looking for message")
+					//log.Println("looking for message")
 					taskMessage, err := w.broker.GetTaskMessage()
 					if err != nil || taskMessage == nil {
 						continue
