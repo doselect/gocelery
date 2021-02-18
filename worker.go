@@ -34,15 +34,10 @@ func NewCeleryWorker(broker CeleryBroker, backend CeleryBackend, numWorkers int)
 	}
 }
 
-func abc(){
-	log.Println("finished execution................................")
-}
-
 // StartWorker starts celery worker
 func (w *CeleryWorker) StartWorker() {
 	w.stopChannel = make(chan struct{}, 1)
-	// wg.Add(w.numWorkers)
-
+	
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	w.cancelFunc = cancelFunc
 	w.waitGroup = sync.WaitGroup{}
@@ -50,9 +45,7 @@ func (w *CeleryWorker) StartWorker() {
 
 	for i := 0; i < w.numWorkers; i++ {
 		go func(workerID int) {
-			// defer wg.Done()
 			defer w.waitGroup.Done()
-			defer abc()
 			ticker := time.NewTicker(w.rateLimitPeriod)
 			for {
 				select {
@@ -62,7 +55,6 @@ func (w *CeleryWorker) StartWorker() {
 				case <-ticker.C:
 
 					// process messages
-					//log.Println("looking for message")
 					taskMessage, err := w.broker.GetTaskMessage()
 					if err != nil || taskMessage == nil {
 						continue
@@ -101,20 +93,14 @@ func (w *CeleryWorker) StartWorker() {
 			}
 		}(i)
 	}
-	// wait untill all tasks are done
-	// w.workWG.Wait()
 }
 
 // StopWorker stops celery workers
 func (w *CeleryWorker) StopWorker() {
-	// for i := 0; i < w.numWorkers; i++ {
-	// 	w.stopChannel <- struct{}{}
-	// }
-	// w.workWG.Wait()
 	log.Println("Stopping Yoda...")
 	w.cancelFunc()
 	w.waitGroup.Wait()
-	log.Println("All go routine finished its task. Shutting down gracefully")
+	log.Println("All workers finished its task. Shutting it down gracefully")
 }
 
 // GetNumWorkers returns number of currently running workers

@@ -3,8 +3,6 @@ package gocelery
 import (
 	"fmt"
 	"time"
-	// "context"
-	// "sync"
 )
 
 // CeleryClient provides API for sending celery tasks
@@ -39,11 +37,6 @@ func NewCeleryClient(broker CeleryBroker, backend CeleryBackend, numWorkers int)
 func (cc *CeleryClient) Register(name string, task interface{}) {
 	cc.worker.Register(name, task)
 }
-
-// StartWorker starts celery workers
-// func (cc *CeleryClient) StartWorker(ctx context.Context, wg *sync.WaitGroup) {
-// 	cc.worker.StartWorker(ctx, wg)
-// }
 
 func (cc *CeleryClient) StartWorker() {
 	cc.worker.StartWorker()
