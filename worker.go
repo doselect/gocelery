@@ -80,7 +80,6 @@ func (w *CeleryWorker) StartWorker() {
 						log.Println(err)
 						continue
 					}
-					log.Println(resultMsg)
 					defer releaseResultMessage(resultMsg)
 
 					// push result to backend
