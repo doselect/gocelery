@@ -17,7 +17,6 @@ type CeleryWorker struct {
 	registeredTasks map[string]interface{}
 	taskLock        sync.RWMutex
 	stopChannel     chan struct{}
-	workWG          sync.WaitGroup
 	rateLimitPeriod time.Duration
 	cancelFunc      context.CancelFunc
 	waitGroup       sync.WaitGroup
