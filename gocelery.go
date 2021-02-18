@@ -38,6 +38,7 @@ func (cc *CeleryClient) Register(name string, task interface{}) {
 	cc.worker.Register(name, task)
 }
 
+// StartWorker starts celery workers
 func (cc *CeleryClient) StartWorker() {
 	cc.worker.StartWorker()
 }
