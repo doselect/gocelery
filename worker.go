@@ -50,7 +50,6 @@ func (w *CeleryWorker) StartWorker() {
 			for {
 				select {
 				case <-ctx.Done():
-					log.Println("Received done")
 					return
 				case <-ticker.C:
 
@@ -59,7 +58,7 @@ func (w *CeleryWorker) StartWorker() {
 					if err != nil || taskMessage == nil {
 						continue
 					}
-					log.Println("received message")
+					
 					if taskMessage.Expires != "" {
 						expires, err := time.Parse(time.RFC3339, taskMessage.Expires)
 						// check whether the task has expired
@@ -73,7 +72,7 @@ func (w *CeleryWorker) StartWorker() {
 
 					//log.Printf("WORKER %d task message received: %v\n", workerID, taskMessage)
 
-					log.Println("start processing")
+					
 					// run task
 					resultMsg, err := w.RunTask(taskMessage)
 					if err != nil {
