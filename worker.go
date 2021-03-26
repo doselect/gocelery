@@ -33,6 +33,10 @@ func NewCeleryWorker(broker CeleryBroker, backend CeleryBackend, numWorkers int)
 	}
 }
 
+func PrintLog(workerID int){
+	log.Printf("Worker-%d successfully completed the task, shutting it down gracefully", workerID)
+}
+
 // StartWorker starts celery worker
 func (w *CeleryWorker) StartWorker() {
 	w.stopChannel = make(chan struct{}, 1)
@@ -79,6 +83,7 @@ func (w *CeleryWorker) StartWorker() {
 						continue
 					}
 					defer releaseResultMessage(resultMsg)
+					defer PrintLog(workerID)
 
 					// push result to backend
 					// err = w.backend.SetResult(taskMessage.ID, resultMsg)
@@ -94,10 +99,10 @@ func (w *CeleryWorker) StartWorker() {
 
 // StopWorker stops celery workers
 func (w *CeleryWorker) StopWorker() {
-	log.Println("Stopping Yoda...")
+	log.Println("Stopping YODA ...\n")
 	w.cancelFunc()
 	w.waitGroup.Wait()
-	log.Println("All workers finished its task. Shutting it down gracefully")
+	log.Println("celeryClient worker stopped.")
 }
 
 // GetNumWorkers returns number of currently running workers
