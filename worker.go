@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"sync"
 	"time"
+	"context"
 )
 
 // CeleryWorker represents distributed task worker
@@ -16,8 +17,9 @@ type CeleryWorker struct {
 	registeredTasks map[string]interface{}
 	taskLock        sync.RWMutex
 	stopChannel     chan struct{}
-	workWG          sync.WaitGroup
 	rateLimitPeriod time.Duration
+	cancelFunc      context.CancelFunc
+	waitGroup       sync.WaitGroup
 }
 
 // NewCeleryWorker returns new celery worker
@@ -31,29 +33,35 @@ func NewCeleryWorker(broker CeleryBroker, backend CeleryBackend, numWorkers int)
 	}
 }
 
+func PrintLog(workerID int){
+	log.Printf("Worker-%d successfully completed the task, shutting it down gracefully", workerID)
+}
+
 // StartWorker starts celery worker
 func (w *CeleryWorker) StartWorker() {
-
 	w.stopChannel = make(chan struct{}, 1)
-	w.workWG.Add(w.numWorkers)
+	
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	w.cancelFunc = cancelFunc
+	w.waitGroup = sync.WaitGroup{}
+	w.waitGroup.Add(w.numWorkers)
 
 	for i := 0; i < w.numWorkers; i++ {
 		go func(workerID int) {
-			defer w.workWG.Done()
+			defer w.waitGroup.Done()
 			ticker := time.NewTicker(w.rateLimitPeriod)
 			for {
 				select {
-				case <-w.stopChannel:
+				case <-ctx.Done():
 					return
 				case <-ticker.C:
 
 					// process messages
 					taskMessage, err := w.broker.GetTaskMessage()
 					if err != nil || taskMessage == nil {
-						log.Println("Error while processing task message")
 						continue
 					}
-
+					
 					if taskMessage.Expires != "" {
 						expires, err := time.Parse(time.RFC3339, taskMessage.Expires)
 						// check whether the task has expired
@@ -67,6 +75,7 @@ func (w *CeleryWorker) StartWorker() {
 
 					//log.Printf("WORKER %d task message received: %v\n", workerID, taskMessage)
 
+					
 					// run task
 					resultMsg, err := w.RunTask(taskMessage)
 					if err != nil {
@@ -74,6 +83,7 @@ func (w *CeleryWorker) StartWorker() {
 						continue
 					}
 					defer releaseResultMessage(resultMsg)
+					defer PrintLog(workerID)
 
 					// push result to backend
 					// err = w.backend.SetResult(taskMessage.ID, resultMsg)
@@ -85,16 +95,14 @@ func (w *CeleryWorker) StartWorker() {
 			}
 		}(i)
 	}
-	// wait untill all tasks are done
-	w.workWG.Wait()
 }
 
 // StopWorker stops celery workers
 func (w *CeleryWorker) StopWorker() {
-	for i := 0; i < w.numWorkers; i++ {
-		w.stopChannel <- struct{}{}
-	}
-	w.workWG.Wait()
+	log.Println("Stopping YODA ...\n")
+	w.cancelFunc()
+	w.waitGroup.Wait()
+	log.Println("celeryClient worker stopped.")
 }
 
 // GetNumWorkers returns number of currently running workers
