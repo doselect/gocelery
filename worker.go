@@ -82,8 +82,9 @@ func (w *CeleryWorker) StartWorker() {
 						log.Println(err)
 						continue
 					}
-					defer releaseResultMessage(resultMsg)
 					defer PrintLog(workerID)
+					defer releaseResultMessage(resultMsg)
+					
 
 					// push result to backend
 					// err = w.backend.SetResult(taskMessage.ID, resultMsg)
