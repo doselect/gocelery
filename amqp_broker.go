@@ -2,8 +2,8 @@ package gocelery
 
 import (
 	"encoding/json"
-	"time"
 	"fmt"
+	"time"
 
 	"github.com/streadway/amqp"
 )
@@ -194,4 +194,12 @@ func (b *AMQPCeleryBroker) CreateQueue() error {
 		nil,
 	)
 	return err
+}
+
+// Reconnect reconnects to AMQP server
+func (b *AMQPCeleryBroker) Reconnect(host) {
+	b.connection.Close()
+	conn, channel := NewAMQPConnection(host)
+	b.Channel = channel
+	b.connection = conn
 }
