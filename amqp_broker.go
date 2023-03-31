@@ -197,9 +197,12 @@ func (b *AMQPCeleryBroker) CreateQueue() error {
 }
 
 // Reconnect reconnects to AMQP server
-func (b *AMQPCeleryBroker) Reconnect(host) {
+func (b *AMQPCeleryBroker) Reconnect(host string) {
 	b.connection.Close()
 	conn, channel := NewAMQPConnection(host)
 	b.Channel = channel
 	b.connection = conn
+	if err := b.StartConsumingChannel(); err != nil {
+		panic(err)
+	}
 }
