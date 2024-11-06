@@ -75,7 +75,7 @@ func NewAMQPCeleryBroker(host, queue string) *AMQPCeleryBroker {
 		connection: conn,
 		exchange:   NewAMQPExchange(queue),
 		queue:      NewAMQPQueue(queue),
-		rate:       4,
+		rate:       2,
 	}
 	if err := broker.CreateExchange(); err != nil {
 		panic(err)
