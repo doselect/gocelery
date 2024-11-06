@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
-
+    "github.com/spf13/viper"
 	"github.com/streadway/amqp"
 )
 
@@ -69,13 +69,14 @@ func NewAMQPConnection(host string) (*amqp.Connection, *amqp.Channel) {
 // NewAMQPCeleryBroker creates new AMQPCeleryBroker
 func NewAMQPCeleryBroker(host, queue string) *AMQPCeleryBroker {
 	conn, channel := NewAMQPConnection(host)
+	viper.SetDefault("PREFETCH", 4)
 	// ensure exchange is initialized
 	broker := &AMQPCeleryBroker{
 		Channel:    channel,
 		connection: conn,
 		exchange:   NewAMQPExchange(queue),
 		queue:      NewAMQPQueue(queue),
-		rate:       4,
+		rate:       viper.GetInt("PREFETCH"),
 	}
 	if err := broker.CreateExchange(); err != nil {
 		panic(err)
